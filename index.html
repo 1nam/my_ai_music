@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Music</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+    color: #00f;
+    text-align: center;
+  }
+
+  #nowPlaying {
+    margin-bottom: 30px;
+    font-size: 1.2em;
+    color: #0ff;
+  }
+
+  .audio-player {
+    background: #1e1e1e;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    width: 90%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 10px #000;
+    transition: box-shadow 0.3s, border 0.3s;
+  }
+
+  .audio-player.active {
+    box-shadow: 0 0 20px #00f;
+    border: 2px solid #00f;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  button {
+    background: #00f;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: #0055ff;
+  }
+
+  input[type="range"] {
+    width: 100px;
+    margin: 5px;
+  }
+
+  .progress-container {
+    width: 100%;
+    height: 5px;
+    background: #333;
+    border-radius: 5px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
+  .progress {
+    height: 100%;
+    background: #00f;
+    width: 0%;
+    border-radius: 5px;
+  }
+
+  @media (max-width: 400px) {
+    .controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 80%;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>Music I Created with AI</h1>
+<div id="nowPlaying">Now Playing: None</div>
+<div id="playersContainer"></div>
+
+<script>
+const audioFiles = [
+  { src: "audio1.mp3", title: "Track 1" },
+  { src: "audio2.mp3", title: "Track 2" },
+  { src: "audio3.mp3", title: "Track 3" }
+];
+
+const container = document.getElementById('playersContainer');
+const nowPlaying = document.getElementById('nowPlaying');
+
+audioFiles.forEach((file, index) => {
+  const player = document.createElement('div');
+  player.classList.add('audio-player');
+  player.id = `player${index}`;
+
+  const title = document.createElement('p');
+  title.textContent = file.title;
+  player.appendChild(title);
+
+  const audio = document.createElement('audio');
+  audio.src = file.src;
+  audio.id = `audio${index}`;
+  player.appendChild(audio);
+
+  const progressContainer = document.createElement('div');
+  progressContainer.classList.add('progress-container');
+  const progress = document.createElement('div');
+  progress.classList.add('progress');
+  progressContainer.appendChild(progress);
+  player.appendChild(progressContainer);
+
+  audio.addEventListener('timeupdate', () => {
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progress.style.width = percent + '%';
+  });
+
+  progressContainer.addEventListener('click', e => {
+    const rect = progressContainer.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    audio.currentTime = (clickX / width) * audio.duration;
+  });
+
+  const controls = document.createElement('div');
+  controls.classList.add('controls');
+
+  const playBtn = document.createElement('button');
+  playBtn.textContent = 'Play/Pause';
+  playBtn.onclick = () => togglePlay(audio.id, player.id, file.title);
+  controls.appendChild(playBtn);
+
+  const muteBtn = document.createElement('button');
+  muteBtn.textContent = 'Mute';
+  muteBtn.onclick = () => toggleMute(audio.id);
+  controls.appendChild(muteBtn);
+
+  const volumeSlider = document.createElement('input');
+  volumeSlider.type = 'range';
+  volumeSlider.min = 0;
+  volumeSlider.max = 1;
+  volumeSlider.step = 0.01;
+  volumeSlider.value = 1;
+  volumeSlider.oninput = (e) => changeVolume(audio.id, e.target.value);
+  controls.appendChild(volumeSlider);
+
+  player.appendChild(controls);
+  container.appendChild(player);
+});
+
+function togglePlay(audioId, playerId, title) {
+  const audio = document.getElementById(audioId);
+  const player = document.getElementById(playerId);
+
+  if (audio.paused) {
+    audio.play();
+    player.classList.add('active');
+    nowPlaying.textContent = `Now Playing: ${title}`;
+
+    // Scroll to active player
+    player.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    audio.pause();
+    player.classList.remove('active');
+    nowPlaying.textContent = 'Now Playing: None';
+  }
+
+  // Stop other tracks
+  document.querySelectorAll('.audio-player').forEach(p => {
+    if (p.id !== playerId) {
+      p.classList.remove('active');
+      const otherAudio = document.getElementById(p.querySelector('audio').id);
+      otherAudio.pause();
+    }
+  });
+}
+
+function toggleMute(audioId) {
+  const audio = document.getElementById(audioId);
+  audio.muted = !audio.muted;
+}
+
+function changeVolume(audioId, value) {
+  const audio = document.getElementById(audioId);
+  audio.volume = value;
+}
+</script>
+</body>
+</html>
